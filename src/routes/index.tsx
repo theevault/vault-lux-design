@@ -15,13 +15,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Pre-owned Apple devices, meticulously verified. Titanium-grade condition reports, transparent pricing, next-day dispatch.",
+          "Pre-owned Apple devices, meticulously verified. Two-year Vault warranty. Next-day dispatch, worldwide.",
       },
       { property: "og:title", content: "The Vault — Certified Apple, refined." },
       {
         property: "og:description",
         content:
-          "Pre-owned Apple devices, meticulously verified. Titanium-grade condition reports, transparent pricing.",
+          "Pre-owned Apple devices, meticulously verified. Two-year Vault warranty.",
       },
       { property: "og:type", content: "website" },
     ],
@@ -34,7 +34,6 @@ type Grade = "Pristine" | "Excellent" | "Good";
 interface Device {
   id: string;
   model: string;
-  variant: string;
   storage: string;
   color: string;
   grade: Grade;
@@ -43,13 +42,13 @@ interface Device {
   was?: number;
   stock: number;
   image: string;
+  category: string;
 }
 
 const inventory: Device[] = [
   {
     id: "iph-15pm-titan",
     model: "iPhone 15 Pro Max",
-    variant: "A2849",
     storage: "512 GB",
     color: "Natural Titanium",
     grade: "Pristine",
@@ -58,12 +57,12 @@ const inventory: Device[] = [
     was: 1399,
     stock: 3,
     image: heroDevice,
+    category: "iPhone",
   },
   {
     id: "mbp-14-m3",
     model: 'MacBook Pro 14"',
-    variant: "M3 Pro · 12-core",
-    storage: "1 TB",
+    storage: "M3 Pro · 1 TB",
     color: "Space Black",
     grade: "Pristine",
     battery: 100,
@@ -71,12 +70,12 @@ const inventory: Device[] = [
     was: 2299,
     stock: 2,
     image: deviceMacbook,
+    category: "Mac",
   },
   {
     id: "wu-2",
     model: "Apple Watch Ultra 2",
-    variant: "49mm GPS + Cellular",
-    storage: "64 GB",
+    storage: "49mm · Cellular",
     color: "Titanium · Orange Alpine",
     grade: "Excellent",
     battery: 95,
@@ -84,12 +83,12 @@ const inventory: Device[] = [
     was: 849,
     stock: 5,
     image: deviceWatch,
+    category: "Watch",
   },
   {
     id: "apm-mid",
     model: "AirPods Max",
-    variant: "USB-C",
-    storage: "—",
+    storage: "USB-C",
     color: "Midnight",
     grade: "Excellent",
     battery: 92,
@@ -97,24 +96,24 @@ const inventory: Device[] = [
     was: 549,
     stock: 8,
     image: deviceAirpods,
+    category: "Audio",
   },
   {
     id: "ipad-pro",
     model: 'iPad Pro 12.9"',
-    variant: "M2 · Wi-Fi + Cellular",
-    storage: "256 GB",
+    storage: "M2 · 256 GB",
     color: "Space Grey",
     grade: "Excellent",
     battery: 94,
     price: 899,
     stock: 4,
     image: deviceIpad,
+    category: "iPad",
   },
   {
     id: "imac-24",
     model: 'iMac 24"',
-    variant: "M3 · 8-core GPU",
-    storage: "512 GB",
+    storage: "M3 · 512 GB",
     color: "Silver",
     grade: "Good",
     battery: null,
@@ -122,17 +121,11 @@ const inventory: Device[] = [
     was: 1599,
     stock: 1,
     image: deviceImac,
+    category: "Mac",
   },
 ];
 
-const categories = [
-  { label: "All", count: 248 },
-  { label: "iPhone", count: 96 },
-  { label: "Mac", count: 64 },
-  { label: "iPad", count: 38 },
-  { label: "Watch", count: 29 },
-  { label: "Audio", count: 21 },
-];
+const categories = ["All", "iPhone", "Mac", "iPad", "Watch", "Audio"];
 
 function Vault() {
   const [scrollY, setScrollY] = useState(0);
@@ -145,7 +138,9 @@ function Vault() {
   }, []);
 
   const navCondensed = scrollY > 32;
-  const heroDim = Math.min(scrollY / 600, 0.6);
+  const heroDim = Math.min(scrollY / 600, 0.5);
+  const filtered =
+    activeCat === "All" ? inventory : inventory.filter((d) => d.category === activeCat);
 
   return (
     <div className="min-h-dvh bg-canvas text-foreground grain">
@@ -184,15 +179,20 @@ function Vault() {
               background: `color-mix(in oklab, white ${navCondensed ? 8 : 4}%, transparent)`,
             }}
           >
-            <div className="flex items-center gap-2.5 pl-2">
+            <a href="#top" className="flex items-center gap-2.5 pl-2">
               <img src={vaultMark.url} alt="" className="h-6 w-6 invert" width={24} height={24} />
               <span className="text-[13px] font-medium tracking-[0.24em]">THE VAULT</span>
-            </div>
+            </a>
             <nav className="hidden items-center gap-1 md:flex">
-              {["Browse", "Trade-In", "Guarantee", "Journal"].map((l) => (
+              {[
+                ["Shop", "#shop"],
+                ["Trade-in", "#trade"],
+                ["Guarantee", "#guarantee"],
+                ["Journal", "#journal"],
+              ].map(([l, href]) => (
                 <a
                   key={l}
-                  href="#"
+                  href={href}
                   className="rounded-full px-4 py-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {l}
@@ -207,22 +207,25 @@ function Vault() {
                 <SearchIcon />
               </button>
               <button
-                aria-label="Vault"
+                aria-label="Bag"
                 className="hairline relative rounded-full p-2 text-muted-foreground transition hover:text-foreground"
               >
                 <BagIcon />
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-gold" />
               </button>
-              <button className="ml-1 rounded-full bg-foreground px-4 py-1.5 text-[13px] font-medium text-background transition hover:opacity-90">
-                Sign in
-              </button>
+              <a
+                href="#shop"
+                className="ml-1 rounded-full bg-foreground px-4 py-1.5 text-[13px] font-medium text-background transition hover:opacity-90"
+              >
+                Shop now
+              </a>
             </div>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative min-h-[100dvh] overflow-hidden pt-32">
+      <section id="top" className="relative min-h-[100dvh] overflow-hidden pt-32">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -248,7 +251,7 @@ function Vault() {
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
               New arrivals · Autumn 2026
             </div>
-            <h1 className="text-display text-[64px] md:text-[104px]">
+            <h1 className="text-display text-[56px] md:text-[104px]">
               Certified Apple.
               <br />
               <span className="text-muted-foreground">Refined.</span>
@@ -258,13 +261,19 @@ function Vault() {
               re-sealed. Two-year Vault warranty. Next-day dispatch, worldwide.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-3">
-              <button className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-[14px] font-medium text-background transition hover:opacity-90">
-                Enter the Vault
+              <a
+                href="#shop"
+                className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-[14px] font-medium text-background transition hover:opacity-90"
+              >
+                Shop the collection
                 <ArrowIcon className="transition-transform duration-500 group-hover:translate-x-1" />
-              </button>
-              <button className="glass inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[14px] font-medium">
+              </a>
+              <a
+                href="#trade"
+                className="glass inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[14px] font-medium"
+              >
                 Trade in your device
-              </button>
+              </a>
             </div>
 
             <dl className="mt-16 grid max-w-md grid-cols-3 gap-6 border-t border-hairline pt-8">
@@ -281,97 +290,127 @@ function Vault() {
             </dl>
           </div>
         </div>
+      </section>
 
-        {/* Floating product tile */}
-        <div className="absolute bottom-16 right-6 hidden md:right-10 md:block">
-          <div className="glass-strong w-[300px] overflow-hidden rounded-3xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-micro">Featured</span>
-              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium tracking-wider text-gold">
-                PRISTINE
-              </span>
-            </div>
-            <div className="mt-2 text-[15px] font-medium">iPhone 15 Pro Max · 512 GB</div>
-            <div className="text-[12px] text-muted-foreground">Natural Titanium · 98% battery</div>
-            <div className="mt-4 flex items-end justify-between">
-              <div>
-                <div className="text-display text-[28px]">£1,149</div>
-                <div className="text-[11px] text-muted-foreground line-through">£1,399</div>
+      {/* Category rail */}
+      <section className="relative mx-auto max-w-[1400px] px-6 py-10 md:px-10">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+          {[
+            ["iPhone", heroDevice],
+            ["Mac", deviceMacbook],
+            ["iPad", deviceIpad],
+            ["Watch", deviceWatch],
+            ["Audio", deviceAirpods],
+            ["Desktop", deviceImac],
+          ].map(([label, img]) => (
+            <button
+              key={label as string}
+              onClick={() => setActiveCat(label as string)}
+              className="group glass relative aspect-square overflow-hidden rounded-2xl p-3 text-left transition-all duration-500 hover:-translate-y-0.5"
+              style={{ transitionTimingFunction: "var(--ease-spring)" }}
+            >
+              <img
+                src={img as string}
+                alt=""
+                loading="lazy"
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 transition-transform duration-1000 group-hover:scale-125"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="relative flex h-full flex-col justify-end">
+                <div className="text-[13px] font-medium">{label as string}</div>
               </div>
-              <button className="rounded-full bg-foreground p-2.5 text-background">
-                <ArrowIcon />
-              </button>
-            </div>
-          </div>
+            </button>
+          ))}
         </div>
       </section>
 
-      {/* DASHBOARD */}
-      <section className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10 md:py-32">
-        <div className="mb-14 flex items-end justify-between">
+      {/* COLLECTION */}
+      <section id="shop" className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10 md:py-32">
+        <div className="mb-14 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <div className="text-micro mb-4">Your Vault</div>
-            <h2 className="text-display text-[44px] md:text-[64px]">Good evening, Marcus.</h2>
-            <p className="mt-3 text-[15px] text-muted-foreground">
-              Three devices in your saved list have dropped in price this week.
-            </p>
+            <div className="text-micro mb-4">The collection</div>
+            <h2 className="text-display text-[40px] md:text-[64px]">
+              Every device,
+              <br />
+              certified by hand.
+            </h2>
           </div>
-          <div className="hidden gap-2 md:flex">
-            <button className="glass rounded-full px-4 py-2 text-[13px]">Overview</button>
-            <button className="rounded-full px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground">
-              Orders
-            </button>
-            <button className="rounded-full px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground">
-              Trade-ins
-            </button>
-          </div>
-        </div>
-
-        {/* Stat row */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <StatCard label="Order · in transit" value="VLT-08421" caption="Arriving tomorrow" progress={0.72} accent />
-          <StatCard label="Saved" value="14" caption="3 dropped in price" />
-          <StatCard label="Trade-in credit" value="£420" caption="Ready to redeem" />
-          <StatCard label="Vault warranty" value="18 mo" caption="Across 2 devices" />
-        </div>
-
-        {/* Collection */}
-        <div className="mt-20">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="text-micro mb-3">Collection</div>
-              <h3 className="text-display text-[32px] md:text-[44px]">
-                Curated for you, this week.
-              </h3>
-            </div>
-            <div className="glass flex items-center gap-1 rounded-full p-1">
-              {categories.map((c) => (
-                <button
-                  key={c.label}
-                  onClick={() => setActiveCat(c.label)}
-                  className={`rounded-full px-4 py-1.5 text-[12px] font-medium transition-all ${
-                    activeCat === c.label
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {c.label}
-                  <span className="ml-1.5 opacity-60">{c.count}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {inventory.map((d) => (
-              <DeviceCard key={d.id} device={d} />
+          <div className="glass flex items-center gap-1 rounded-full p-1">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setActiveCat(c)}
+                className={`rounded-full px-4 py-1.5 text-[12px] font-medium transition-all ${
+                  activeCat === c
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {c}
+              </button>
             ))}
           </div>
         </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((d) => (
+            <DeviceCard key={d.id} device={d} />
+          ))}
+        </div>
+
+        <div className="mt-14 text-center">
+          <a
+            href="#"
+            className="glass inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium"
+          >
+            Browse all 248 devices <ArrowIcon />
+          </a>
+        </div>
       </section>
 
-      {/* TRADE IN band */}
-      <section className="relative mx-auto max-w-[1400px] px-6 pb-24 md:px-10 md:pb-32">
+      {/* PROCESS */}
+      <section
+        id="guarantee"
+        className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10 md:py-32"
+      >
+        <div className="mb-16 grid gap-10 md:grid-cols-[1.1fr_1fr] md:items-end">
+          <div>
+            <div className="text-micro mb-4">The Vault standard</div>
+            <h2 className="text-display text-[40px] md:text-[64px]">
+              Seventy-two checks.
+              <br />
+              <span className="text-muted-foreground">Zero compromises.</span>
+            </h2>
+          </div>
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            Each device is disassembled, diagnosed, and rebuilt by Apple-certified technicians in
+            our London facility. Batteries under 90% are replaced. Housings under grade are
+            declined. If it doesn't earn the Vault seal, it doesn't leave the door.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          {[
+            ["01", "Source", "Trade-ins and enterprise returns, never bulk auctions."],
+            ["02", "Inspect", "72-point diagnostic across battery, board, cameras and housing."],
+            ["03", "Restore", "Genuine parts only. Batteries replaced below 90% health."],
+            ["04", "Seal", "Sanitised, re-boxed and sealed with the Vault mark."],
+          ].map(([n, title, body]) => (
+            <div
+              key={n}
+              className="glass rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1"
+              style={{ transitionTimingFunction: "var(--ease-spring)" }}
+            >
+              <div className="font-mono text-[11px] tracking-widest text-gold">{n}</div>
+              <div className="mt-6 text-[18px] font-medium">{title}</div>
+              <div className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{body}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TRADE-IN */}
+      <section id="trade" className="relative mx-auto max-w-[1400px] px-6 pb-24 md:px-10 md:pb-32">
         <div className="glass-strong relative overflow-hidden rounded-[44px] p-10 md:p-16">
           <div
             className="pointer-events-none absolute -right-20 -top-20 h-[420px] w-[420px] rounded-full opacity-70 blur-3xl"
@@ -424,41 +463,104 @@ function Vault() {
         </div>
       </section>
 
-      {/* Order timeline */}
-      <section className="relative mx-auto max-w-[1400px] px-6 pb-32 md:px-10">
-        <div className="mb-10">
-          <div className="text-micro mb-3">Order · VLT-08421</div>
-          <h3 className="text-display text-[32px] md:text-[44px]">
-            iPhone 15 Pro Max is on its way.
-          </h3>
+      {/* GUARANTEE STRIP */}
+      <section className="relative mx-auto max-w-[1400px] px-6 pb-24 md:px-10">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[
+            ["24 months", "Vault warranty"],
+            ["14 days", "No-questions returns"],
+            ["Free", "Insured delivery"],
+            ["Zero interest", "Finance available"],
+          ].map(([k, v]) => (
+            <div
+              key={v}
+              className="hairline rounded-2xl bg-surface/40 p-6 text-center"
+            >
+              <div className="text-display text-[22px]">{k}</div>
+              <div className="mt-1 text-[12px] text-muted-foreground">{v}</div>
+            </div>
+          ))}
         </div>
-        <div className="glass rounded-3xl p-8 md:p-10">
-          <div className="grid gap-6 md:grid-cols-4">
-            {[
-              ["Verified", "Mon · 09:24", true],
-              ["Sealed", "Mon · 17:02", true],
-              ["Dispatched", "Tue · 06:15", true],
-              ["Delivering", "Wed · by 12:00", false],
-            ].map(([label, time, done], i) => (
-              <div key={label as string} className="relative">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-medium ${
-                      done ? "bg-gold text-background" : "hairline bg-surface"
-                    }`}
-                  >
-                    {done ? "✓" : i + 1}
-                  </div>
-                  <div>
-                    <div className="text-[14px] font-medium">{label as string}</div>
-                    <div className="text-[12px] text-muted-foreground">{time as string}</div>
-                  </div>
-                </div>
-                {i < 3 && (
-                  <div className="absolute left-8 top-4 hidden h-px w-full bg-hairline md:block" />
-                )}
-              </div>
-            ))}
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section
+        id="journal"
+        className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10 md:py-32"
+      >
+        <div className="mb-14 max-w-2xl">
+          <div className="text-micro mb-4">In their words</div>
+          <h2 className="text-display text-[40px] md:text-[56px]">
+            Trusted by twelve thousand collectors.
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {[
+            {
+              quote:
+                "The unboxing felt more considered than buying new. Everything about it says: this was thought about.",
+              name: "Elena K.",
+              meta: "Milan · MacBook Pro",
+            },
+            {
+              quote:
+                "Battery replaced, cameras recalibrated, seal on the box. Half the price and the same device.",
+              name: "Devon R.",
+              meta: "Brooklyn · iPhone 15 Pro",
+            },
+            {
+              quote:
+                "Traded in three devices in one collection. The valuation held, the payment cleared the next day.",
+              name: "Amara O.",
+              meta: "London · Vault member",
+            },
+          ].map((t) => (
+            <figure
+              key={t.name}
+              className="glass flex flex-col justify-between rounded-3xl p-7"
+            >
+              <blockquote className="text-[16px] leading-relaxed">"{t.quote}"</blockquote>
+              <figcaption className="mt-8 border-t border-hairline pt-4">
+                <div className="text-[13px] font-medium">{t.name}</div>
+                <div className="text-[12px] text-muted-foreground">{t.meta}</div>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative mx-auto max-w-[1400px] px-6 pb-32 md:px-10">
+        <div className="glass-strong relative overflow-hidden rounded-[44px] px-10 py-20 text-center md:px-16 md:py-28">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-70"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, oklch(0.4 0.08 280 / 0.35), transparent 60%)",
+            }}
+          />
+          <div className="relative">
+            <h2 className="text-display mx-auto max-w-3xl text-[44px] md:text-[80px]">
+              Enter the Vault.
+            </h2>
+            <p className="mx-auto mt-6 max-w-lg text-[15px] text-muted-foreground">
+              A quieter way to own Apple. Better for your pocket, better for the planet, sealed with
+              a two-year guarantee.
+            </p>
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              <a
+                href="#shop"
+                className="rounded-full bg-foreground px-6 py-3.5 text-[14px] font-medium text-background"
+              >
+                Shop the collection
+              </a>
+              <a
+                href="#trade"
+                className="glass rounded-full px-6 py-3.5 text-[14px] font-medium"
+              >
+                Value my device
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -477,39 +579,6 @@ function Vault() {
           </div>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  caption,
-  progress,
-  accent,
-}: {
-  label: string;
-  value: string;
-  caption: string;
-  progress?: number;
-  accent?: boolean;
-}) {
-  return (
-    <div className="glass group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
-      style={{ transitionTimingFunction: "var(--ease-spring)" }}>
-      <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <div className={`text-display text-[28px] ${accent ? "text-gold" : ""}`}>{value}</div>
-      </div>
-      <div className="mt-1 text-[12px] text-muted-foreground">{caption}</div>
-      {typeof progress === "number" && (
-        <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/8">
-          <div
-            className="h-full rounded-full bg-gold transition-all duration-1000"
-            style={{ width: `${progress * 100}%`, transitionTimingFunction: "var(--ease-spring)" }}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -586,7 +655,7 @@ function DeviceCard({ device }: { device: Device }) {
             disabled={sold}
             className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
           >
-            Add
+            View
           </button>
         </div>
       </div>
