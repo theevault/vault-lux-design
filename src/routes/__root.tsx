@@ -90,6 +90,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "The Vault — Certified Apple, refined." },
+      { name: "description", content: "Pre-owned Apple devices, meticulously verified. Two-year Vault warranty. Next-day dispatch, worldwide." },
+      { property: "og:description", content: "Pre-owned Apple devices, meticulously verified. Two-year Vault warranty. Next-day dispatch, worldwide." },
+      { name: "twitter:description", content: "Pre-owned Apple devices, meticulously verified. Two-year Vault warranty. Next-day dispatch, worldwide." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/36uz74SLs1NV00iEo2vjTZsoX6E3/social-images/social-1783417895451-rear_camera__c9hqca901ugm_large_2x.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/36uz74SLs1NV00iEo2vjTZsoX6E3/social-images/social-1783417895451-rear_camera__c9hqca901ugm_large_2x.webp" },
     ],
     links: [
       {
