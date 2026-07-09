@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import vaultMark from "@/assets/vault-mark.asset.json";
 import heroDevice from "@/assets/hero-device.jpg";
@@ -7,6 +7,7 @@ import deviceWatch from "@/assets/device-watch.jpg";
 import deviceAirpods from "@/assets/device-airpods.jpg";
 import deviceIpad from "@/assets/device-ipad.jpg";
 import deviceImac from "@/assets/device-imac.jpg";
+import { inventory, type Device } from "@/lib/inventory";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,101 +30,6 @@ export const Route = createFileRoute("/")({
   component: Vault,
 });
 
-type Grade = "Pristine" | "Excellent" | "Good";
-
-interface Device {
-  id: string;
-  model: string;
-  storage: string;
-  color: string;
-  grade: Grade;
-  battery: number | null;
-  price: number;
-  was?: number;
-  stock: number;
-  image: string;
-  category: string;
-}
-
-const inventory: Device[] = [
-  {
-    id: "iph-15pm-titan",
-    model: "iPhone 15 Pro Max",
-    storage: "512 GB",
-    color: "Natural Titanium",
-    grade: "Pristine",
-    battery: 98,
-    price: 1149,
-    was: 1399,
-    stock: 3,
-    image: heroDevice,
-    category: "iPhone",
-  },
-  {
-    id: "mbp-14-m3",
-    model: 'MacBook Pro 14"',
-    storage: "M3 Pro · 1 TB",
-    color: "Space Black",
-    grade: "Pristine",
-    battery: 100,
-    price: 1889,
-    was: 2299,
-    stock: 2,
-    image: deviceMacbook,
-    category: "Mac",
-  },
-  {
-    id: "wu-2",
-    model: "Apple Watch Ultra 2",
-    storage: "49mm · Cellular",
-    color: "Titanium · Orange Alpine",
-    grade: "Excellent",
-    battery: 95,
-    price: 649,
-    was: 849,
-    stock: 5,
-    image: deviceWatch,
-    category: "Watch",
-  },
-  {
-    id: "apm-mid",
-    model: "AirPods Max",
-    storage: "USB-C",
-    color: "Midnight",
-    grade: "Excellent",
-    battery: 92,
-    price: 379,
-    was: 549,
-    stock: 8,
-    image: deviceAirpods,
-    category: "Audio",
-  },
-  {
-    id: "ipad-pro",
-    model: 'iPad Pro 12.9"',
-    storage: "M2 · 256 GB",
-    color: "Space Grey",
-    grade: "Excellent",
-    battery: 94,
-    price: 899,
-    stock: 4,
-    image: deviceIpad,
-    category: "iPad",
-  },
-  {
-    id: "imac-24",
-    model: 'iMac 24"',
-    storage: "M3 · 512 GB",
-    color: "Silver",
-    grade: "Good",
-    battery: null,
-    price: 1249,
-    was: 1599,
-    stock: 1,
-    image: deviceImac,
-    category: "Mac",
-  },
-];
 
 const categories = ["All", "iPhone", "Mac", "iPad", "Watch", "Audio"];
 
@@ -651,12 +557,14 @@ function DeviceCard({ device }: { device: Device }) {
             {device.battery !== null && <span>Battery {device.battery}%</span>}
             <span>2yr warranty</span>
           </div>
-          <button
-            disabled={sold}
-            className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+          <Link
+            to="/device/$id"
+            params={{ id: device.id }}
+            aria-disabled={sold}
+            className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background transition hover:opacity-90 aria-disabled:opacity-40 aria-disabled:pointer-events-none"
           >
             View
-          </button>
+          </Link>
         </div>
       </div>
     </article>
