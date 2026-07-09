@@ -187,36 +187,145 @@ function DevicePage() {
             <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">{device.tagline}</p>
 
             <div className="mt-6 flex items-baseline gap-3">
-              <div className="text-display text-[36px]">£{device.price.toLocaleString()}</div>
-              {device.was && (
+              <div className="text-display text-[36px]">£{current.price.toLocaleString()}</div>
+              {device.was && current.price === device.price && (
                 <div className="text-[15px] text-muted-foreground line-through">
                   £{device.was.toLocaleString()}
                 </div>
               )}
-              {device.was && (
+              {device.was && current.price === device.price && (
                 <div className="rounded-full bg-gold/20 px-2.5 py-1 text-[11px] font-medium tracking-wider text-gold">
                   SAVE £{(device.was - device.price).toLocaleString()}
                 </div>
               )}
             </div>
 
-            <dl className="mt-8 grid grid-cols-3 gap-3">
-              <Fact k="Storage" v={device.storage} />
-              <Fact k="Colour" v={device.color} />
-              <Fact k="Grade" v={device.grade} />
-              {device.battery !== null && <Fact k="Battery" v={`${device.battery}%`} />}
-              <Fact k="Warranty" v={`${device.warrantyMonths} months`} />
-              <Fact k="Stock" v={sold ? "Sold out" : `${device.stock} available`} />
-            </dl>
+            {/* Storage */}
+            <div className="mt-8">
+              <div className="mb-3 flex items-baseline justify-between">
+                <span className="text-[12px] font-medium">Storage</span>
+                <span className="text-[11px] text-muted-foreground">{storage}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {storages.map((s) => {
+                  const v = variant(s, color);
+                  const active = s === storage;
+                  const oos = v.stock === 0;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setStorage(s)}
+                      disabled={oos}
+                      className={`hairline relative rounded-xl px-3 py-2.5 text-left transition ${
+                        active
+                          ? "border-foreground bg-foreground/10"
+                          : "hover:border-hairline-strong"
+                      } ${oos ? "opacity-40" : ""}`}
+                    >
+                      <div className="text-[12px] font-medium">{s}</div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
+                        {oos ? "Sold out" : `£${v.price.toLocaleString()}`}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            <div className="mt-8 flex flex-col gap-3">
-              <button
-                disabled={sold}
-                className="w-full rounded-full bg-foreground px-6 py-4 text-[14px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+            {/* Colour */}
+            <div className="mt-6">
+              <div className="mb-3 flex items-baseline justify-between">
+                <span className="text-[12px] font-medium">Colour</span>
+                <span className="text-[11px] text-muted-foreground">{color}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((c) => {
+                  const v = variant(storage, c);
+                  const active = c === color;
+                  const oos = v.stock === 0;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setColor(c)}
+                      disabled={oos}
+                      title={c}
+                      aria-label={c}
+                      className={`hairline relative h-9 w-9 rounded-full transition ${
+                        active ? "ring-2 ring-foreground ring-offset-2 ring-offset-canvas" : ""
+                      } ${oos ? "opacity-30" : ""}`}
+                      style={{ background: colorSwatch(c) }}
+                    >
+                      {oos && (
+                        <span className="absolute inset-x-1 top-1/2 h-px -translate-y-1/2 rotate-45 bg-foreground" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div className="mt-6 hairline flex items-center gap-3 rounded-2xl bg-surface/40 px-4 py-3">
+              <span
+                className={`relative flex h-2 w-2 items-center justify-center ${
+                  sold ? "" : "animate-pulse"
+                }`}
               >
-                {sold ? "Sold out" : "Add to bag"}
-              </button>
-              <button className="glass w-full rounded-full px-6 py-4 text-[14px] font-medium">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    sold ? "bg-destructive" : low ? "bg-gold" : "bg-emerald-400"
+                  }`}
+                />
+              </span>
+              <div className="flex-1">
+                <div className="text-[13px] font-medium">
+                  {sold
+                    ? "Sold out — restocking soon"
+                    : low
+                      ? `Low stock — only ${current.stock} left`
+                      : `In stock · ${current.stock} available`}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {sold
+                    ? "Join the waitlist for a next-batch alert"
+                    : `Order within 4 hrs for next-day dispatch`}
+                </div>
+              </div>
+            </div>
+
+            {/* Qty + Add */}
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-stretch gap-3">
+                <div className="hairline flex items-center rounded-full bg-surface/40">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={sold || effectiveQty <= 1}
+                    aria-label="Decrease quantity"
+                    className="h-11 w-11 text-[16px] text-muted-foreground transition hover:text-foreground disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-8 text-center text-[14px] font-medium tabular-nums">
+                    {effectiveQty}
+                  </span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                    disabled={sold || effectiveQty >= maxQty}
+                    aria-label="Increase quantity"
+                    className="h-11 w-11 text-[16px] text-muted-foreground transition hover:text-foreground disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  onClick={handleAdd}
+                  disabled={sold}
+                  className="flex-1 rounded-full bg-foreground px-6 py-3.5 text-[14px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+                >
+                  {sold ? "Sold out" : added ? "Added to bag ✓" : `Add to bag · £${(current.price * effectiveQty).toLocaleString()}`}
+                </button>
+              </div>
+              <button className="glass w-full rounded-full px-6 py-3.5 text-[14px] font-medium">
                 Reserve for in-store pickup
               </button>
             </div>
@@ -226,8 +335,9 @@ function DevicePage() {
               <span>·</span>
               <span>14-day returns</span>
               <span>·</span>
-              <span>Next-day dispatch</span>
+              <span>{device.warrantyMonths}-mo warranty</span>
             </div>
+
 
             {/* Tabs */}
             <div className="mt-10 border-t border-hairline pt-6">
