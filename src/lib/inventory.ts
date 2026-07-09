@@ -187,3 +187,79 @@ export const inventory: Device[] = [
 export function getDevice(id: string): Device | undefined {
   return inventory.find((d) => d.id === id);
 }
+
+const STORAGE_BY_CATEGORY: Record<string, string[]> = {
+  iPhone: ["128 GB", "256 GB", "512 GB", "1 TB"],
+  Mac: ["512 GB", "1 TB", "2 TB"],
+  iPad: ["128 GB", "256 GB", "512 GB", "1 TB"],
+  Watch: ["GPS", "GPS + Cellular"],
+  Audio: ["USB-C"],
+};
+
+const COLORS_BY_CATEGORY: Record<string, string[]> = {
+  iPhone: ["Natural Titanium", "Blue Titanium", "White Titanium", "Black Titanium"],
+  Mac: ["Space Black", "Silver", "Space Grey"],
+  iPad: ["Space Grey", "Silver"],
+  Watch: ["Titanium · Orange Alpine", "Titanium · Blue Alpine", "Titanium · Green Alpine"],
+  Audio: ["Midnight", "Starlight", "Space Grey", "Silver"],
+};
+
+// Deterministic pseudo-random from a string, for stable per-variant stock/pricing.
+function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+export interface Variant {
+  storage: string;
+  color: string;
+  price: number;
+  stock: number;
+}
+
+export function getVariants(device: Device): {
+  storages: string[];
+  colors: string[];
+  variant: (storage: string, color: string) => Variant;
+} {
+  const baseStorage = device.storage;
+  const baseColor = device.color;
+  const catStorages = STORAGE_BY_CATEGORY[device.category] ?? [baseStorage];
+  const catColors = COLORS_BY_CATEGORY[device.category] ?? [baseColor];
+
+  // Merge base with category options; keep base first, unique.
+  const storages = Array.from(new Set([baseStorage, ...catStorages]));
+  const colors = Array.from(new Set([baseColor, ...catColors]));
+
+  const variant = (storage: string, color: string): Variant => {
+    const isBase = storage === baseStorage && color === baseColor;
+    if (isBase) {
+      return { storage, color, price: device.price, stock: device.stock };
+    }
+    const seed = hash(`${device.id}|${storage}|${color}`);
+    // Stock 0..5, weighted so most combos have some stock.
+    const stock = [0, 1, 2, 2, 3, 4, 5][seed % 7];
+    // Price varies by storage tier and small color premium.
+    const tier = catStorages.indexOf(storage);
+    const baseTier = catStorages.indexOf(baseStorage);
+    const step =
+      device.category === "iPhone" || device.category === "iPad"
+        ? 90
+        : device.category === "Mac"
+          ? 180
+          : device.category === "Watch"
+            ? 60
+            : 0;
+    const priceDelta = (tier - baseTier) * step + (seed % 30);
+    return {
+      storage,
+      color,
+      price: Math.max(99, device.price + priceDelta),
+      stock,
+    };
+  };
+
+  return { storages, colors, variant };
+}
+
