@@ -98,15 +98,22 @@ function DevicePage() {
               <img src={vaultMark.url} alt="" className="h-6 w-6 invert" width={24} height={24} />
               <span className="text-[13px] font-medium tracking-[0.24em]">THE VAULT</span>
             </Link>
-            <Link
-              to="/"
-              className="rounded-full glass px-4 py-1.5 text-[12px] text-muted-foreground transition hover:text-foreground"
-            >
-              ← Back to collection
-            </Link>
-          </div>
-        </div>
-      </header>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/"
+                className="rounded-full glass px-4 py-1.5 text-[12px] text-muted-foreground transition hover:text-foreground"
+              >
+                ← Back to collection
+              </Link>
+              <div
+                className="relative hairline flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px]"
+                aria-label={`Bag: ${cartCount} items`}
+              >
+                <BagGlyph />
+                <span className="tabular-nums">{cartCount}</span>
+                {cartCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-gold" />}
+              </div>
+            </div>
 
       {/* Breadcrumb */}
       <div className="mx-auto max-w-[1400px] px-6 pt-8 md:px-10">
