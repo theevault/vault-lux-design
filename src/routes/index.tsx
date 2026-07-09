@@ -557,12 +557,14 @@ function DeviceCard({ device }: { device: Device }) {
             {device.battery !== null && <span>Battery {device.battery}%</span>}
             <span>2yr warranty</span>
           </div>
-          <button
-            disabled={sold}
-            className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+          <Link
+            to="/device/$id"
+            params={{ id: device.id }}
+            aria-disabled={sold}
+            className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background transition hover:opacity-90 aria-disabled:opacity-40 aria-disabled:pointer-events-none"
           >
             View
-          </button>
+          </Link>
         </div>
       </div>
     </article>
