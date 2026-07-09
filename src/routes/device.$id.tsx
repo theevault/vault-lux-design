@@ -51,8 +51,34 @@ function DevicePage() {
   const [activeImage, setActiveImage] = useState(0);
   const gallery = [device.image, device.image, device.image, device.image];
 
-  const sold = device.stock === 0;
-  const low = device.stock > 0 && device.stock <= 2;
+  const { storages, colors, variant } = useMemo(() => getVariants(device), [device]);
+  const [storage, setStorage] = useState(device.storage);
+  const [color, setColor] = useState(device.color);
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
+  const { count: cartCount } = useCart();
+
+  const current = variant(storage, color);
+  const sold = current.stock === 0;
+  const low = current.stock > 0 && current.stock <= 2;
+  const maxQty = Math.max(1, current.stock);
+  const effectiveQty = Math.min(qty, maxQty);
+
+  const handleAdd = () => {
+    if (sold) return;
+    addToCart({
+      key: `${device.id}|${storage}|${color}`,
+      deviceId: device.id,
+      model: device.model,
+      storage,
+      color,
+      price: current.price,
+      image: device.image,
+      qty: effectiveQty,
+    });
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1800);
+  };
 
   return (
     <div className="min-h-dvh bg-canvas text-foreground grain">
