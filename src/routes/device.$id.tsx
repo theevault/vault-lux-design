@@ -215,7 +215,7 @@ function DevicePage() {
               <div className="mt-6">
                 {tab === "specs" && (
                   <dl className="divide-y divide-hairline">
-                    {device.specs.map((s) => (
+                    {device.specs.map((s: { label: string; value: string }) => (
                       <div key={s.label} className="flex items-start justify-between gap-6 py-3">
                         <dt className="text-[13px] text-muted-foreground">{s.label}</dt>
                         <dd className="text-right text-[13px] font-medium">{s.value}</dd>
