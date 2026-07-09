@@ -156,7 +156,7 @@ function DevicePage() {
                 </span>
                 {low && (
                   <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-medium tracking-wider backdrop-blur-xl">
-                    ONLY {device.stock} LEFT
+                    ONLY {current.stock} LEFT
                   </span>
                 )}
               </div>
