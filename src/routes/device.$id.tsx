@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
-import { getDevice, inventory, type Device } from "@/lib/inventory";
+import { useMemo, useState } from "react";
+import { getDevice, getVariants, inventory, type Device } from "@/lib/inventory";
+import { addToCart, useCart } from "@/lib/cart";
 import vaultMark from "@/assets/vault-mark.asset.json";
 
 export const Route = createFileRoute("/device/$id")({
