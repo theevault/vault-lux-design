@@ -454,14 +454,36 @@ function DevicePage() {
   );
 }
 
-function Fact({ k, v }: { k: string; v: string }) {
+function BagGlyph() {
   return (
-    <div className="hairline rounded-2xl bg-surface/40 p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{k}</div>
-      <div className="mt-1 text-[13px] font-medium">{v}</div>
-    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M5 8h14l-1.2 11.1a2 2 0 0 1-2 1.9H8.2a2 2 0 0 1-2-1.9L5 8Z" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M9 8V6a3 3 0 1 1 6 0v2" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
   );
 }
+
+const SWATCH_MAP: Record<string, string> = {
+  "Natural Titanium": "linear-gradient(135deg,#8a8378,#c8bfae)",
+  "Blue Titanium": "linear-gradient(135deg,#3b4b62,#7d94ad)",
+  "White Titanium": "linear-gradient(135deg,#e8e8e6,#c3c3c1)",
+  "Black Titanium": "linear-gradient(135deg,#2a2a2c,#4a4a4e)",
+  "Space Black": "linear-gradient(135deg,#1a1a1c,#3a3a3e)",
+  "Space Grey": "linear-gradient(135deg,#4a4a4d,#7a7a7d)",
+  Silver: "linear-gradient(135deg,#d8d8dc,#b0b0b4)",
+  Midnight: "linear-gradient(135deg,#151824,#2e3444)",
+  Starlight: "linear-gradient(135deg,#f0e8d8,#c9bfad)",
+};
+
+function colorSwatch(name: string): string {
+  if (SWATCH_MAP[name]) return SWATCH_MAP[name];
+  // Watch bands: pick accent color from "· Xxx Alpine"
+  if (name.includes("Orange")) return "linear-gradient(135deg,#e28545,#b25a1f)";
+  if (name.includes("Blue")) return "linear-gradient(135deg,#3b6f9a,#274c6c)";
+  if (name.includes("Green")) return "linear-gradient(135deg,#4b7a4a,#2f5330)";
+  return "linear-gradient(135deg,#6a6a6d,#3a3a3d)";
+}
+
 
 function RelatedCard({ device }: { device: Device }) {
   return (
