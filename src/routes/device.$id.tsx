@@ -114,6 +114,11 @@ function DevicePage() {
                 {cartCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-gold" />}
               </div>
             </div>
+          </div>
+        </div>
+      </header>
+
+
 
       {/* Breadcrumb */}
       <div className="mx-auto max-w-[1400px] px-6 pt-8 md:px-10">
