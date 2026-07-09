@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
-import { getDevice, inventory, type Device } from "@/lib/inventory";
+import { useMemo, useState } from "react";
+import { getDevice, getVariants, inventory, type Device } from "@/lib/inventory";
+import { addToCart, useCart } from "@/lib/cart";
 import vaultMark from "@/assets/vault-mark.asset.json";
 
 export const Route = createFileRoute("/device/$id")({
@@ -50,8 +51,34 @@ function DevicePage() {
   const [activeImage, setActiveImage] = useState(0);
   const gallery = [device.image, device.image, device.image, device.image];
 
-  const sold = device.stock === 0;
-  const low = device.stock > 0 && device.stock <= 2;
+  const { storages, colors, variant } = useMemo(() => getVariants(device), [device]);
+  const [storage, setStorage] = useState(device.storage);
+  const [color, setColor] = useState(device.color);
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
+  const { count: cartCount } = useCart();
+
+  const current = variant(storage, color);
+  const sold = current.stock === 0;
+  const low = current.stock > 0 && current.stock <= 2;
+  const maxQty = Math.max(1, current.stock);
+  const effectiveQty = Math.min(qty, maxQty);
+
+  const handleAdd = () => {
+    if (sold) return;
+    addToCart({
+      key: `${device.id}|${storage}|${color}`,
+      deviceId: device.id,
+      model: device.model,
+      storage,
+      color,
+      price: current.price,
+      image: device.image,
+      qty: effectiveQty,
+    });
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1800);
+  };
 
   return (
     <div className="min-h-dvh bg-canvas text-foreground grain">
@@ -71,15 +98,27 @@ function DevicePage() {
               <img src={vaultMark.url} alt="" className="h-6 w-6 invert" width={24} height={24} />
               <span className="text-[13px] font-medium tracking-[0.24em]">THE VAULT</span>
             </Link>
-            <Link
-              to="/"
-              className="rounded-full glass px-4 py-1.5 text-[12px] text-muted-foreground transition hover:text-foreground"
-            >
-              ← Back to collection
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/"
+                className="rounded-full glass px-4 py-1.5 text-[12px] text-muted-foreground transition hover:text-foreground"
+              >
+                ← Back to collection
+              </Link>
+              <div
+                className="relative hairline flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px]"
+                aria-label={`Bag: ${cartCount} items`}
+              >
+                <BagGlyph />
+                <span className="tabular-nums">{cartCount}</span>
+                {cartCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-gold" />}
+              </div>
+            </div>
           </div>
         </div>
       </header>
+
+
 
       {/* Breadcrumb */}
       <div className="mx-auto max-w-[1400px] px-6 pt-8 md:px-10">
@@ -117,7 +156,7 @@ function DevicePage() {
                 </span>
                 {low && (
                   <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-medium tracking-wider backdrop-blur-xl">
-                    ONLY {device.stock} LEFT
+                    ONLY {current.stock} LEFT
                   </span>
                 )}
               </div>
@@ -148,36 +187,145 @@ function DevicePage() {
             <p className="mt-4 text-[16px] leading-relaxed text-muted-foreground">{device.tagline}</p>
 
             <div className="mt-6 flex items-baseline gap-3">
-              <div className="text-display text-[36px]">£{device.price.toLocaleString()}</div>
-              {device.was && (
+              <div className="text-display text-[36px]">£{current.price.toLocaleString()}</div>
+              {device.was && current.price === device.price && (
                 <div className="text-[15px] text-muted-foreground line-through">
                   £{device.was.toLocaleString()}
                 </div>
               )}
-              {device.was && (
+              {device.was && current.price === device.price && (
                 <div className="rounded-full bg-gold/20 px-2.5 py-1 text-[11px] font-medium tracking-wider text-gold">
                   SAVE £{(device.was - device.price).toLocaleString()}
                 </div>
               )}
             </div>
 
-            <dl className="mt-8 grid grid-cols-3 gap-3">
-              <Fact k="Storage" v={device.storage} />
-              <Fact k="Colour" v={device.color} />
-              <Fact k="Grade" v={device.grade} />
-              {device.battery !== null && <Fact k="Battery" v={`${device.battery}%`} />}
-              <Fact k="Warranty" v={`${device.warrantyMonths} months`} />
-              <Fact k="Stock" v={sold ? "Sold out" : `${device.stock} available`} />
-            </dl>
+            {/* Storage */}
+            <div className="mt-8">
+              <div className="mb-3 flex items-baseline justify-between">
+                <span className="text-[12px] font-medium">Storage</span>
+                <span className="text-[11px] text-muted-foreground">{storage}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {storages.map((s) => {
+                  const v = variant(s, color);
+                  const active = s === storage;
+                  const oos = v.stock === 0;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setStorage(s)}
+                      disabled={oos}
+                      className={`hairline relative rounded-xl px-3 py-2.5 text-left transition ${
+                        active
+                          ? "border-foreground bg-foreground/10"
+                          : "hover:border-hairline-strong"
+                      } ${oos ? "opacity-40" : ""}`}
+                    >
+                      <div className="text-[12px] font-medium">{s}</div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
+                        {oos ? "Sold out" : `£${v.price.toLocaleString()}`}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            <div className="mt-8 flex flex-col gap-3">
-              <button
-                disabled={sold}
-                className="w-full rounded-full bg-foreground px-6 py-4 text-[14px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+            {/* Colour */}
+            <div className="mt-6">
+              <div className="mb-3 flex items-baseline justify-between">
+                <span className="text-[12px] font-medium">Colour</span>
+                <span className="text-[11px] text-muted-foreground">{color}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((c) => {
+                  const v = variant(storage, c);
+                  const active = c === color;
+                  const oos = v.stock === 0;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setColor(c)}
+                      disabled={oos}
+                      title={c}
+                      aria-label={c}
+                      className={`hairline relative h-9 w-9 rounded-full transition ${
+                        active ? "ring-2 ring-foreground ring-offset-2 ring-offset-canvas" : ""
+                      } ${oos ? "opacity-30" : ""}`}
+                      style={{ background: colorSwatch(c) }}
+                    >
+                      {oos && (
+                        <span className="absolute inset-x-1 top-1/2 h-px -translate-y-1/2 rotate-45 bg-foreground" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div className="mt-6 hairline flex items-center gap-3 rounded-2xl bg-surface/40 px-4 py-3">
+              <span
+                className={`relative flex h-2 w-2 items-center justify-center ${
+                  sold ? "" : "animate-pulse"
+                }`}
               >
-                {sold ? "Sold out" : "Add to bag"}
-              </button>
-              <button className="glass w-full rounded-full px-6 py-4 text-[14px] font-medium">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    sold ? "bg-destructive" : low ? "bg-gold" : "bg-emerald-400"
+                  }`}
+                />
+              </span>
+              <div className="flex-1">
+                <div className="text-[13px] font-medium">
+                  {sold
+                    ? "Sold out — restocking soon"
+                    : low
+                      ? `Low stock — only ${current.stock} left`
+                      : `In stock · ${current.stock} available`}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {sold
+                    ? "Join the waitlist for a next-batch alert"
+                    : `Order within 4 hrs for next-day dispatch`}
+                </div>
+              </div>
+            </div>
+
+            {/* Qty + Add */}
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-stretch gap-3">
+                <div className="hairline flex items-center rounded-full bg-surface/40">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={sold || effectiveQty <= 1}
+                    aria-label="Decrease quantity"
+                    className="h-11 w-11 text-[16px] text-muted-foreground transition hover:text-foreground disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-8 text-center text-[14px] font-medium tabular-nums">
+                    {effectiveQty}
+                  </span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                    disabled={sold || effectiveQty >= maxQty}
+                    aria-label="Increase quantity"
+                    className="h-11 w-11 text-[16px] text-muted-foreground transition hover:text-foreground disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  onClick={handleAdd}
+                  disabled={sold}
+                  className="flex-1 rounded-full bg-foreground px-6 py-3.5 text-[14px] font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+                >
+                  {sold ? "Sold out" : added ? "Added to bag ✓" : `Add to bag · £${(current.price * effectiveQty).toLocaleString()}`}
+                </button>
+              </div>
+              <button className="glass w-full rounded-full px-6 py-3.5 text-[14px] font-medium">
                 Reserve for in-store pickup
               </button>
             </div>
@@ -187,8 +335,9 @@ function DevicePage() {
               <span>·</span>
               <span>14-day returns</span>
               <span>·</span>
-              <span>Next-day dispatch</span>
+              <span>{device.warrantyMonths}-mo warranty</span>
             </div>
+
 
             {/* Tabs */}
             <div className="mt-10 border-t border-hairline pt-6">
@@ -305,14 +454,36 @@ function DevicePage() {
   );
 }
 
-function Fact({ k, v }: { k: string; v: string }) {
+function BagGlyph() {
   return (
-    <div className="hairline rounded-2xl bg-surface/40 p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{k}</div>
-      <div className="mt-1 text-[13px] font-medium">{v}</div>
-    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M5 8h14l-1.2 11.1a2 2 0 0 1-2 1.9H8.2a2 2 0 0 1-2-1.9L5 8Z" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M9 8V6a3 3 0 1 1 6 0v2" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
   );
 }
+
+const SWATCH_MAP: Record<string, string> = {
+  "Natural Titanium": "linear-gradient(135deg,#8a8378,#c8bfae)",
+  "Blue Titanium": "linear-gradient(135deg,#3b4b62,#7d94ad)",
+  "White Titanium": "linear-gradient(135deg,#e8e8e6,#c3c3c1)",
+  "Black Titanium": "linear-gradient(135deg,#2a2a2c,#4a4a4e)",
+  "Space Black": "linear-gradient(135deg,#1a1a1c,#3a3a3e)",
+  "Space Grey": "linear-gradient(135deg,#4a4a4d,#7a7a7d)",
+  Silver: "linear-gradient(135deg,#d8d8dc,#b0b0b4)",
+  Midnight: "linear-gradient(135deg,#151824,#2e3444)",
+  Starlight: "linear-gradient(135deg,#f0e8d8,#c9bfad)",
+};
+
+function colorSwatch(name: string): string {
+  if (SWATCH_MAP[name]) return SWATCH_MAP[name];
+  // Watch bands: pick accent color from "· Xxx Alpine"
+  if (name.includes("Orange")) return "linear-gradient(135deg,#e28545,#b25a1f)";
+  if (name.includes("Blue")) return "linear-gradient(135deg,#3b6f9a,#274c6c)";
+  if (name.includes("Green")) return "linear-gradient(135deg,#4b7a4a,#2f5330)";
+  return "linear-gradient(135deg,#6a6a6d,#3a3a3d)";
+}
+
 
 function RelatedCard({ device }: { device: Device }) {
   return (
